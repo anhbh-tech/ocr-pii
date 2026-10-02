@@ -1,0 +1,52 @@
+name: pytest
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      # Python lấy theo requires-python trong pyproject.toml.
+      # Bỏ torch/transformers/OCR engine nặng: code nạp chúng lười, test cần
+      # chúng mang mark `slow` hoặc tự skip khi thiếu.
+      - name: Install deps
+        run: >
+          uv sync --frozen
+          --no-install-package torch
+          --no-install-package torchvision
+          --no-install-package transformers
+          --no-install-package accelerate
+          --no-install-package easyocr
+          --no-install-package vietocr
+      # Deselect: test cần data/ (gitignore), ~/.private hoặc tesseract.
+      - name: Run pytest
+        run: >
+          uv run --frozen --no-sync pytest -q -m "not slow"
+          --deselect tests/test_project_setup.py::test_data_folders_exist
+          --deselect tests/test_project_setup.py::test_client_data_folders_are_private
+          --deselect tests/test_engines.py::test_tesseract_refuses_to_run_without_vietnamese_traineddata
+          --deselect tests/test_range_codepoint.py::test_span_khong_nuot_khoang_trang_giua_tu
+
+  # pii-core/ là project uv riêng (chỉ thư viện chuẩn); test của nó chạy
+  # trong thư mục của nó.
+  pii-core:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: pii-core
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - name: Run pytest
+        run: uv run --frozen --extra dev pytest -q

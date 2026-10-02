@@ -1,0 +1,22 @@
+SYNTHETIC TEST DATA — fabricated, not a real person. Every name, number and address below is invented.
+CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM
+Độc lập - Tự do - Hạnh phúc
+
+TỜ KHAI ĐĂNG KÝ NHÃN HIỆU
+Họ và tên: Nguyễn Văn Mẫu    Sinh ngày: 05/03/1990
+Số CCCD: 001099000001 cấp ngày 01/01/2020
+Địa chỉ: 12 Đường Hư Cấu, Phường Mẫu, Quận Thử Nghiệm, Thành phố Ví Dụ
+Điện thoại: 0900 000 001; Email: mau.nguyen@example.test
+Tên nhãn hiệu: HƯ CẤU
+Số đơn: 4-2024-12345
+Lệ phí: 1,234,567 VND
+Người đại diện: Công ty TNHH Mẫu Thử, MST 0312345678
+Ông Trần Thị Thử liên hệ qua +84 900 000 002 về hồ sơ NH1234.
+Placeholder Holdings Ltd trả $ 2,500.00 ngày 7 tháng 4 năm 2024.
+| Trường | Giá trị |
+|---|---|
+| Họ tên | Lê Hư Cấu |
+| Nơi thường trú | Số 5 ngõ 12 phố Mẫu, Quận Thử |
+<table><tr><th>Họ tên</th><th>Email</th></tr><tr><td>Phạm Giả Định</td><td>dinh.pham@example.test</td></tr></table>
+Địa chỉ:
+12 Đường Hư Cấu, Phường Mẫu

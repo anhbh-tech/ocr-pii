@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ocr-lab.classify/1",
+  "title": "ClassifyResult",
+  "description": "Kết quả POST /api/classify của ocr-lab. Tài liệu: docs/classify-api.md.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["contract", "kind", "route", "confidence", "reason", "source",
+               "pages", "pages_needing_ocr", "signals", "error"],
+  "properties": {
+    "contract": {"const": "ocr-lab.classify/1"},
+    "kind": {
+      "enum": ["born_digital_pdf", "scanned_pdf", "hybrid_pdf", "image",
+               "unreadable", "docx_text", "docx_image_only", "docx_hybrid",
+               "text", "unsupported"]
+    },
+    "route": {"$ref": "#/$defs/route"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "reason": {"type": "string"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "format", "bytes"],
+      "properties": {
+        "name": {"type": "string"},
+        "format": {"type": "string"},
+        "bytes": {"type": "integer", "minimum": 0}
+      }
+    },
+    "pages": {"type": "array", "items": {"$ref": "#/$defs/page"}},
+    "pages_needing_ocr": {
+      "type": "array",
+      "items": {"type": "integer", "minimum": 0}
+    },
+    "signals": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["page_count", "text_layer_pages", "image_pages",
+                   "mixed_pages", "blank_pages", "chars_total",
+                   "text_layer_coverage", "route_agreement", "images",
+                   "text_regions"],
+      "properties": {
+        "page_count": {"type": "integer", "minimum": 0},
+        "text_layer_pages": {"type": "integer", "minimum": 0},
+        "image_pages": {"type": "integer", "minimum": 0},
+        "mixed_pages": {"type": "integer", "minimum": 0},
+        "blank_pages": {"type": "integer", "minimum": 0},
+        "chars_total": {"type": "integer", "minimum": 0},
+        "text_layer_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+        "route_agreement": {"type": "number", "minimum": 0, "maximum": 1},
+        "images": {"type": ["integer", "null"], "minimum": 0},
+        "text_regions": {"type": ["integer", "null"], "minimum": 0}
+      }
+    },
+    "error": {"type": ["string", "null"]}
+  },
+  "$defs": {
+    "route": {"enum": ["read_direct", "ocr", "agent_context"]},
+    "page": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["index", "kind", "route", "confidence", "reason", "chars",
+                   "image_cover", "images", "text_regions"],
+      "properties": {
+        "index": {"type": "integer", "minimum": 0},
+        "kind": {"enum": ["text_layer", "image", "mixed", "blank"]},
+        "route": {"$ref": "#/$defs/route"},
+        "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+        "reason": {"type": "string"},
+        "chars": {"type": "integer", "minimum": 0},
+        "image_cover": {"type": "number", "minimum": 0},
+        "images": {"type": ["integer", "null"], "minimum": 0},
+        "text_regions": {"type": ["integer", "null"], "minimum": 0}
+      }
+    }
+  }
+}

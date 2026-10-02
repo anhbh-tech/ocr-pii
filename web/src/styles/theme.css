@@ -1,0 +1,156 @@
+/* Hệ chủ đề (theme) — mọi màu trong ứng dụng đi qua đúng các biến dưới đây.
+ *
+ * VÌ SAO TÁCH RA MỘT TỆP RIÊNG
+ * ────────────────────────────
+ * Trước đây màu nằm rải rác trong style.css dưới dạng mã hex viết thẳng.
+ * Muốn đổi chủ đề thì phải sửa hàng chục chỗ, và chỉ cần sót một chỗ là
+ * giao diện lộ ra mảng màu của chủ đề cũ — kiểu lỗi chỉ phát hiện bằng mắt.
+ *
+ * Nay mọi thứ tham chiếu qua biến. Đổi chủ đề = đổi giá trị biến ở gốc
+ * `:root[data-theme="..."]`, không đụng tới một luật CSS nào khác.
+ *
+ * QUY ƯỚC ĐẶT TÊN
+ * ───────────────
+ *   --bg-*      nền, từ sâu nhất (app) ra ngoài (nổi, ví dụ hộp thoại)
+ *   --fg-*      chữ, từ rõ nhất tới mờ nhất
+ *   --line-*    đường kẻ
+ *   --accent-*  màu nhấn, dùng cho phần tử ĐANG CHỌN
+ *   --ok/warn/err  màu trạng thái
+ *   --ovl-*     màu vẽ lên canvas (overlay) — xem ghi chú bên dưới
+ *
+ * MÀU OVERLAY KHÔNG ĐỔI THEO CHỦ ĐỀ
+ * ─────────────────────────────────
+ * Khung chunk/span vẽ đè lên ẢNH TÀI LIỆU, không đè lên nền ứng dụng.
+ * Ảnh tài liệu luôn là giấy trắng chữ đen bất kể người dùng chọn chủ đề
+ * nào. Nếu cho màu overlay chạy theo chủ đề thì ở chủ đề sáng nó sẽ hoà
+ * vào giấy và biến mất — đúng lỗi đã gặp một lần với nét 0,8px.
+ */
+
+/* ─────────────────────────── slate (mặc định) ─────────────────────────── */
+/* Xám xanh trung tính, tương phản cao. Chọn làm mặc định vì công việc ở đây
+   là soi chữ hàng giờ — nền càng ít màu càng đỡ mỏi mắt. */
+:root,
+:root[data-theme="slate"] {
+  --bg-app:     #0f1115;
+  --bg-panel:   #151922;
+  --bg-raise:   #1c212c;
+  --bg-float:   #232936;
+  --bg-hover:   #2a3140;
+
+  --fg-strong:  #e8ecf4;
+  --fg:         #c3cad8;
+  --fg-mute:    #7b8496;
+  --fg-faint:   #545c6b;
+
+  --line:       #2a3140;
+  --line-soft:  #212736;
+
+  --accent:     #f0883e;
+  --accent-fg:  #1a1108;
+  --accent-dim: #f0883e33;
+
+  --ok:         #3fb950;
+  --warn:       #d29922;
+  --err:        #f85149;
+
+  --shadow:     0 8px 32px #00000066;
+  --radius:     10px;
+}
+
+/* ──────────────────────────────── nord ─────────────────────────────────── */
+/* Bảng màu Nord: lạnh, độ bão hoà thấp. Dịu mắt nhất trong ba chủ đề tối. */
+:root[data-theme="nord"] {
+  --bg-app:     #2e3440;
+  --bg-panel:   #323846;
+  --bg-raise:   #3b4252;
+  --bg-float:   #434c5e;
+  --bg-hover:   #4c566a;
+
+  --fg-strong:  #eceff4;
+  --fg:         #d8dee9;
+  --fg-mute:    #9aa5b8;
+  --fg-faint:   #6b7688;
+
+  --line:       #434c5e;
+  --line-soft:  #3b4252;
+
+  --accent:     #88c0d0;
+  --accent-fg:  #1c2530;
+  --accent-dim: #88c0d033;
+
+  --ok:         #a3be8c;
+  --warn:       #ebcb8b;
+  --err:        #bf616a;
+
+  --shadow:     0 8px 32px #1b202a99;
+  --radius:     10px;
+}
+
+/* ────────────────────────────── gruvbox ────────────────────────────────── */
+/* Ấm, hơi ngả nâu. Hợp khi làm việc buổi tối dưới đèn vàng. */
+:root[data-theme="gruvbox"] {
+  --bg-app:     #1d2021;
+  --bg-panel:   #282828;
+  --bg-raise:   #32302f;
+  --bg-float:   #3c3836;
+  --bg-hover:   #504945;
+
+  --fg-strong:  #fbf1c7;
+  --fg:         #ebdbb2;
+  --fg-mute:    #a89984;
+  --fg-faint:   #7c6f64;
+
+  --line:       #3c3836;
+  --line-soft:  #32302f;
+
+  --accent:     #fe8019;
+  --accent-fg:  #1d2021;
+  --accent-dim: #fe801933;
+
+  --ok:         #b8bb26;
+  --warn:       #fabd2f;
+  --err:        #fb4934;
+
+  --shadow:     0 8px 32px #00000080;
+  --radius:     8px;
+}
+
+/* ─────────────────────────────── paper ─────────────────────────────────── */
+/* Chủ đề SÁNG. Có mặt vì một lý do thực dụng: khi soát tài liệu scan, để
+   giao diện cùng tông với giấy thì mắt không phải điều tiết qua lại giữa
+   nền tối và ảnh trắng. */
+:root[data-theme="paper"] {
+  --bg-app:     #f6f7f9;
+  --bg-panel:   #ffffff;
+  --bg-raise:   #f0f2f5;
+  --bg-float:   #ffffff;
+  --bg-hover:   #e6e9ef;
+
+  --fg-strong:  #12151b;
+  --fg:         #333a45;
+  --fg-mute:    #6b7280;
+  --fg-faint:   #9aa1ad;
+
+  --line:       #d8dce3;
+  --line-soft:  #e8ebf0;
+
+  --accent:     #c2410c;
+  --accent-fg:  #ffffff;
+  --accent-dim: #c2410c1f;
+
+  --ok:         #15803d;
+  --warn:       #a16207;
+  --err:        #b91c1c;
+
+  --shadow:     0 8px 32px #0f172a1f;
+  --radius:     10px;
+}
+
+/* ─────────────────────── màu vẽ overlay (cố định) ──────────────────────── */
+/* Đặt NGOÀI mọi khối chủ đề: luôn là một giá trị, không bao giờ đổi. */
+:root {
+  --ovl-chunk:     #6b7280;
+  --ovl-chunk-on:  #f0883e;
+  --ovl-span:      #3b82f6;
+  --ovl-fix:       #10b981;
+}

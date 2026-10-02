@@ -1,0 +1,386 @@
+{
+ "version": 1,
+ "note": "Measured evidence ported from pii-lab src/pii_lab/data/decisions.json (branch fm/pii-decision-lab, commit 3102d30). Counts only — no client value, no label text. pii-core derives every action from these counts with pii_core.decide; it does not copy pii-lab's frozen actions.",
+ "source": {
+  "project": "pii-lab",
+  "file": "src/pii_lab/data/decisions.json",
+  "branch": "fm/pii-decision-lab",
+  "commit": "3102d30",
+  "pii_lab_version": "0.1.0"
+ },
+ "corpus": {
+  "matters": 10,
+  "documents": 566,
+  "chunks": 2758,
+  "table_chunks": 451,
+  "vault_rows": 2331
+ },
+ "reidentification": {
+  "ADDRESS": {
+   "category": "ADDRESS",
+   "source": "vault",
+   "distinct": 738,
+   "singletons": 699,
+   "matters": 10
+  },
+  "EMAIL": {
+   "category": "EMAIL",
+   "source": "vault",
+   "distinct": 171,
+   "singletons": 154,
+   "matters": 10
+  },
+  "NATIONAL_ID": {
+   "category": "NATIONAL_ID",
+   "source": "vault",
+   "distinct": 10,
+   "singletons": 8,
+   "matters": 10
+  },
+  "ORG": {
+   "category": "ORG",
+   "source": "vault",
+   "distinct": 194,
+   "singletons": 171,
+   "matters": 10
+  },
+  "PERSON": {
+   "category": "PERSON",
+   "source": "vault",
+   "distinct": 166,
+   "singletons": 139,
+   "matters": 10
+  },
+  "PHONE": {
+   "category": "PHONE",
+   "source": "vault",
+   "distinct": 124,
+   "singletons": 111,
+   "matters": 10
+  },
+  "SOURCE_FILE": {
+   "category": "SOURCE_FILE",
+   "source": "vault",
+   "distinct": 566,
+   "singletons": 566,
+   "matters": 10
+  },
+  "DATE": {
+   "category": "DATE",
+   "source": "fact",
+   "distinct": 916,
+   "singletons": 822,
+   "matters": 10
+  },
+  "INVOICE_NO": {
+   "category": "INVOICE_NO",
+   "source": "fact",
+   "distinct": 20,
+   "singletons": 20,
+   "matters": 10
+  },
+  "MONEY": {
+   "category": "MONEY",
+   "source": "fact",
+   "distinct": 349,
+   "singletons": 315,
+   "matters": 10
+  },
+  "NICE_CLASS": {
+   "category": "NICE_CLASS",
+   "source": "fact",
+   "distinct": 17,
+   "singletons": 11,
+   "matters": 10
+  },
+  "REG_NUMBER": {
+   "category": "REG_NUMBER",
+   "source": "fact",
+   "distinct": 45,
+   "singletons": 45,
+   "matters": 10
+  },
+  "TAX_CODE": {
+   "category": "TAX_CODE",
+   "source": "fact",
+   "distinct": 7,
+   "singletons": 5,
+   "matters": 10
+  },
+  "OTHER_ID": {
+   "category": "OTHER_ID",
+   "source": "fact",
+   "distinct": 1,
+   "singletons": 1,
+   "matters": 10
+  },
+  "URL": {
+   "category": "URL",
+   "source": "fact",
+   "distinct": 177,
+   "singletons": 138,
+   "matters": 10
+  },
+  "APP_SERIAL": {
+   "category": "APP_SERIAL",
+   "source": "fact",
+   "distinct": 75,
+   "singletons": 75,
+   "matters": 10
+  },
+  "MATTER_REF": {
+   "category": "MATTER_REF",
+   "source": "matter",
+   "distinct": 10,
+   "singletons": 10,
+   "matters": 10
+  }
+ },
+ "need": {
+  "PERSON": {
+   "category": "PERSON",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 132,
+   "links_source": "token"
+  },
+  "ADDRESS": {
+   "category": "ADDRESS",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 262,
+   "links_source": "token"
+  },
+  "EMAIL": {
+   "category": "EMAIL",
+   "facts_lost": 921,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 150,
+   "links_source": "token"
+  },
+  "PHONE": {
+   "category": "PHONE",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 114,
+   "links_source": "token"
+  },
+  "NATIONAL_ID": {
+   "category": "NATIONAL_ID",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 7,
+   "links_source": "token"
+  },
+  "MRZ": {
+   "category": "MRZ",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "TAX_CODE": {
+   "category": "TAX_CODE",
+   "facts_lost": 98,
+   "sole_anchor_for": 0,
+   "declared_searchable": true,
+   "links": 7,
+   "links_source": "fact"
+  },
+  "ORG": {
+   "category": "ORG",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 119,
+   "links_source": "token"
+  },
+  "PARTY": {
+   "category": "PARTY",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "FIRM": {
+   "category": "FIRM",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "MONEY": {
+   "category": "MONEY",
+   "facts_lost": 859,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 106,
+   "links_source": "fact"
+  },
+  "MATTER_REF": {
+   "category": "MATTER_REF",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": true,
+   "links": 0,
+   "links_source": "none"
+  },
+  "SOURCE_FILE": {
+   "category": "SOURCE_FILE",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "APP_SERIAL": {
+   "category": "APP_SERIAL",
+   "facts_lost": 348,
+   "sole_anchor_for": 81,
+   "declared_searchable": true,
+   "links": 46,
+   "links_source": "fact"
+  },
+  "REG_NUMBER": {
+   "category": "REG_NUMBER",
+   "facts_lost": 79,
+   "sole_anchor_for": 6,
+   "declared_searchable": false,
+   "links": 25,
+   "links_source": "fact"
+  },
+  "NICE_CLASS": {
+   "category": "NICE_CLASS",
+   "facts_lost": 161,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 11,
+   "links_source": "fact"
+  },
+  "DATE": {
+   "category": "DATE",
+   "facts_lost": 2872,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 639,
+   "links_source": "fact"
+  },
+  "URL": {
+   "category": "URL",
+   "facts_lost": 513,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 77,
+   "links_source": "fact"
+  },
+  "INVOICE_NO": {
+   "category": "INVOICE_NO",
+   "facts_lost": 40,
+   "sole_anchor_for": 31,
+   "declared_searchable": false,
+   "links": 9,
+   "links_source": "fact"
+  },
+  "GEO": {
+   "category": "GEO",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "OTHER_ID": {
+   "category": "OTHER_ID",
+   "facts_lost": 1,
+   "sole_anchor_for": 0,
+   "declared_searchable": true,
+   "links": 0,
+   "links_source": "none"
+  },
+  "BIRTH_DATE": {
+   "category": "BIRTH_DATE",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "AGENCY": {
+   "category": "AGENCY",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "FACE_PHOTO": {
+   "category": "FACE_PHOTO",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "SIGNATURE": {
+   "category": "SIGNATURE",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "FINGERPRINT": {
+   "category": "FINGERPRINT",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "SCAN_CODE": {
+   "category": "SCAN_CODE",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "MARK_IMAGE": {
+   "category": "MARK_IMAGE",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  },
+  "LOGO": {
+   "category": "LOGO",
+   "facts_lost": 0,
+   "sole_anchor_for": 0,
+   "declared_searchable": false,
+   "links": 0,
+   "links_source": "none"
+  }
+ },
+ "pii_core_rows": {
+  "note": "Rows pii-core adds to pii-lab's evidence on the firm's rulings of 2026-09-28 (pipeline report OCR -> PII -> kho, §2.3 and §6). Nothing here was counted on pii-lab's corpus: each row records that no stage reads the value back (N = 0), and why. See docs/RECONCILIATION.md.",
+  "rows": {
+   "BIRTH_DATE": "tách khỏi DATE (P1). pii-lab chỉ đo DATE gộp; N = 0 là kết luận của báo cáo §2.3 hàng 15: không chặng nào đọc lại ngày sinh.",
+   "AGENCY": "hạng mục roster mới (P2), như PARTY: không có phép đếm; N đến từ khai báo decide.DECLARED_SEARCHABLE.",
+   "FACE_PHOTO": "chỉ có trên ảnh trang (báo cáo §2.3 hàng 29); không chặng nào đọc lại.",
+   "SIGNATURE": "chỉ có trên ảnh trang (hàng 30); không chặng nào đọc lại.",
+   "FINGERPRINT": "chỉ có trên ảnh trang (hàng 30); không chặng nào đọc lại.",
+   "SCAN_CODE": "chỉ có trên ảnh trang (hàng 31); không chặng nào đọc lại.",
+   "MARK_IMAGE": "chỉ có trên ảnh trang (hàng 21, P4); so hình chỉ chạy tại máy, trên bản gốc, nên không chặng nào sau bản che cần nó.",
+   "LOGO": "chỉ có trên ảnh trang (hàng 21, P4); như MARK_IMAGE."
+  }
+ }
+}

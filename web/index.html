@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Đối chiếu ADE · ocr-lab</title>
+<script type="module">
+  /* Áp chủ đề TRƯỚC khi trang vẽ. Để tới lúc app.js chạy mới áp thì người
+     dùng thấy một nháy chủ đề mặc định rồi mới đổi — khó chịu nhất với
+     chủ đề sáng, vì nháy đó là một mảng trắng giữa nền tối. */
+  import { apDungSom } from '/src/lib/theme.js';
+  apDungSom();
+</script>
+<!-- CSS nạp qua main.js để Vite gộp và băm đúng thứ tự.
+     Trước đây hai thẻ <link href="/..."> tuyệt đối ở đây bị Vite coi là
+     tài nguyên NGOÀI dự án và bỏ hẳn khỏi bản dựng — trang ra trắng toát
+     mà không có một lỗi nào trong console. -->
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">📄 ocr-lab</div>
+
+  <!-- Chọn engine: đặt ở góc trên TRÁI, cạnh tên dự án, vì nó quyết định
+       toàn bộ nội dung khung phải — không phải một tuỳ chọn hiển thị. -->
+  <div class="engineSel" id="engineSel">
+    <button id="engLocal" title="Đọc thẳng từ tệp · không OCR, miễn phí, tức thì">Đọc tệp</button>
+    <button id="engAde" class="on" title="ADE Verity · 0,3 credits/trang">ADE Verity</button>
+    <button id="engPro" title="ADE Pro · 0,9 credits/trang — gấp 3 Verity">ADE Pro</button>
+    <button id="engVision" title="Apple Vision · chạy cục bộ trên máy, miễn phí">Apple Vision</button>
+  </div>
+
+  <button id="btnBrowse" class="browseBtn" title="Duyệt thư mục hồ sơ trên máy">📁 Duyệt tệp</button>
+
+  <div class="spacer"></div>
+  <button id="btnTheme" class="iconBtn" title="Đổi giao diện">◐</button>
+  <div class="modelTag" id="modelTag"></div>
+</header>
+
+<main class="layout">
+
+  <!-- ── cột trái: cây hồ sơ ─────────────────────────────────────────── -->
+  <aside class="tree" id="tree">
+    <div class="treeHead">Hồ sơ</div>
+    <div id="treeBody" class="treeBody muted">đang tải…</div>
+  </aside>
+
+  <!-- ── giữa: ảnh trang + overlay ───────────────────────────────────── -->
+  <section class="viewer">
+
+    <!-- Thanh công cụ của tài liệu ĐANG xem: đường dẫn bên trái, phóng to và
+         chuyển trang bên phải.
+         Đặt ở đây chứ không ở thanh trên cùng vì nó nói về NỘI DUNG cột này —
+         thanh trên là của cả ứng dụng. Và đây là thanh phóng to DUY NHẤT:
+         trình xem nhúng ẩn thanh riêng của nó đi (xem viewer.js). -->
+    <div class="docBar">
+      <div class="docPath" id="docPath" title="Chưa chọn tài liệu">
+        <span class="muted">chưa chọn tài liệu</span>
+      </div>
+
+      <div class="pager" id="pager" hidden>
+        <button id="prevPage" title="Trang trước">‹</button>
+        <span id="pageLabel">1 / 1</span>
+        <button id="nextPage" title="Trang sau">›</button>
+      </div>
+
+      <div class="zoomGrp" id="zoomGrp">
+        <button id="zoomOut" title="Thu nhỏ (Ctrl −)">−</button>
+        <button id="zoomLabel" title="Bấm để trả về 100%">100%</button>
+        <button id="zoomIn" title="Phóng to (Ctrl +)">+</button>
+        <button id="zoomFit" class="zoomFit" title="Vừa bề ngang">⤢</button>
+      </div>
+    </div>
+
+    <div class="stage" id="stage">
+      <div class="placeholder" id="placeholder">Chọn một tài liệu ở cột trái</div>
+      <div class="docHtml" id="docHtml" hidden></div>
+      <div class="imgWrap" id="imgWrap" hidden>
+        <img id="pageImg" alt="trang tài liệu">
+        <canvas id="overlay"></canvas>
+      </div>
+      <!-- Trình xem NHÚNG: cùng một lớp TrinhXem với lớp phủ, chỉ khác chỗ
+           đặt. Một trình đọc cho mọi định dạng, không phải hai. -->
+      <div class="inlineViewer" id="inlineViewer" hidden></div>
+    </div>
+
+    <div class="files" id="files" hidden>
+      <button class="filesHead" id="filesHead" aria-expanded="true">
+        <span id="filesCount">Files</span><span class="chev">⌄</span>
+      </button>
+      <div class="filesStrip" id="filesStrip"></div>
+    </div>
+  </section>
+
+  <!-- ── phải: chunk ─────────────────────────────────────────────────── -->
+  <section class="panel">
+    <div class="panelBar">
+      <div class="seg">
+        <button id="tabMd" class="on">Markdown</button>
+        <button id="tabJson">{ } JSON</button>
+      </div>
+      <div class="spacer"></div>
+      <div class="layers" id="layers">
+        <button id="layChe" title="Xem trước bản che: vùng pii-core bảo che, vẽ đúng chỗ box ADE Pro mà PDF che sẽ tô đen. Rê chuột lên ô đen để xem token, hạng mục và luật.">⬛ che</button>
+        <button id="layTruong" title="Soát field pii-core trên trang: mọi field kể cả KEEP, tô màu theo hành động (bí danh hoá / ẩn danh hoá / giữ), ghi hạng mục và token; bảng đếm theo hành động.">🏷 trường</button>
+        <button id="tabPII" title="Tô thông tin nhạy cảm: bút danh hoá (hoàn nguyên được) vs ẩn danh hoá (không hoàn nguyên). Rê chuột lên vùng tô để xem vì sao.">⬤ nhạy cảm</button>
+        <button id="layChunk" class="on" title="Khung từng phần tử">▭ chunk</button>
+        <button id="laySpan" class="on" title="Khung từng dòng/từ">▬ span</button>
+      </div>
+    </div>
+
+    <div class="chunks" id="chunks">
+      <div class="muted pad">Chưa có dữ liệu.</div>
+    </div>
+
+    <footer class="panelFoot">
+      <span id="creditInfo" class="muted"></span>
+    </footer>
+  </section>
+
+</main>
+
+
+<!-- File manager: phủ toàn màn hình thay vì một cột bên cạnh, vì duyệt tệp và
+     soát kết quả là hai việc KHÁC nhau — làm cùng lúc thì cả hai đều chật. -->
+<div class="fmOverlay" id="fmOverlay" hidden>
+  <div class="fmPanel">
+    <div class="fmHead">
+      <button id="fmUp" title="Lên một cấp">↑</button>
+      <span class="fmPath" id="fmPath">/</span>
+      <div class="fmEngine">
+        <label>chạy bằng</label>
+        <select id="fmEngine">
+          <option value="vision">Apple Vision · miễn phí</option>
+          <option value="verity">ADE Verity · 0,3 cr/trang</option>
+          <option value="pro">ADE Pro · 0,9 cr/trang</option>
+        </select>
+      </div>
+      <button id="fmBatch" class="fmBatchBtn"
+              title="Chạy engine đang chọn cho MỌI tệp trong thư mục này">▶ Chạy cả thư mục</button>
+      <button id="fmClose" title="Đóng">✕</button>
+    </div>
+    <div class="fmBody">
+      <div class="fmList" id="fmList"></div>
+      <!-- Khung xem trước: hiện ngay khi CHỌN một tệp (một lần bấm), trước
+           khi quyết định mở hay chạy OCR. Thấy trong tệp có gì rồi mới tiêu
+           tiền là thứ tự đúng. -->
+      <aside class="fmPrev" id="fmPrev">
+        <div class="fmPrevEmpty" id="fmPrevEmpty">Chọn một tệp để xem trước</div>
+        <div class="fmPrevBox" id="fmPrevBox" hidden>
+          <div class="fmPrevHead">
+            <span class="fmPrevName" id="fmPrevName"></span>
+            <span class="fmPrevMeta" id="fmPrevMeta"></span>
+          </div>
+          <div class="fmPrevThumb" id="fmPrevThumb"></div>
+          <div class="fmPrevText" id="fmPrevText"></div>
+          <div class="fmPrevActs">
+            <button id="fmPrevOpen" class="fmActBtn">Mở tệp</button>
+            <button id="fmPrevScan" class="fmActBtn primary">⚡ Quét OCR</button>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div class="fmProg" id="fmProg" hidden>
+      <div class="fmProgHead"><span id="fmProgName"></span><span id="fmProgPct"></span></div>
+      <div class="fmBar"><div class="fmBarFill" id="fmBarFill"></div></div>
+      <div class="fmProgMsg" id="fmProgMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Script nằm SAU mọi phần tử nó gán sự kiện.
+     Trước đây thẻ này ở giữa trang, phía trên lớp phủ file manager, nên
+     `$('btnBrowse').onclick` chạy lúc phần tử chưa tồn tại → TypeError →
+     toàn bộ phần script sau đó không chạy, và trang chỉ còn khung trắng. -->
+<script type="module" src="/src/main.js"></script>
+</body>
+</html>

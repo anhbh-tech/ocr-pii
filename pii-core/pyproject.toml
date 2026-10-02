@@ -1,0 +1,26 @@
+[project]
+name = "pii-core"
+version = "0.1.0"
+description = "Classify every field of a case document as keep / pseudonymise / anonymise / remove before it reaches jev ai or an agent."
+requires-python = ">=3.11"
+# Standard library only, like pii-lab: the capability has to run wherever the
+# frozen evidence runs, with nothing to install on the machine that holds the
+# case files.
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+pii-core = "pii_core.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pii_core"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src", "tests"]

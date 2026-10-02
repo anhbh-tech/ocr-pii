@@ -1,0 +1,34 @@
+{
+ "_synthetic": "SYNTHETIC TEST DATA — fabricated, not a real person. Every value below is invented.",
+ "_note": "Invented values that appear in case_synthetic.txt and MUST NOT survive redaction (except where noted).",
+ "must_not_survive": [
+  "Nguyễn Văn Mẫu",
+  "Trần Thị Thử",
+  "Lê Hư Cấu",
+  "Phạm Giả Định",
+  "Công ty TNHH Mẫu Thử",
+  "Placeholder Holdings Ltd",
+  "12 Đường Hư Cấu, Phường Mẫu, Quận Thử Nghiệm, Thành phố Ví Dụ",
+  "Số 5 ngõ 12 phố Mẫu, Quận Thử",
+  "mau.nguyen@example.test",
+  "dinh.pham@example.test",
+  "0900 000 001",
+  "+84 900 000 002",
+  "001099000001",
+  "0312345678",
+  "1,234,567 VND",
+  "$ 2,500.00",
+  "NH1234",
+  "05/03/1990",
+  "7 tháng 4 năm 2024",
+  "HƯ CẤU",
+  "4-2024-12345"
+ ],
+ "must_survive": [
+  "CỘNG HÒA XÃ HỘI CHỦ NGHĨA VIỆT NAM",
+  "Độc lập - Tự do - Hạnh phúc",
+  "Tên nhãn hiệu: [MARK-",
+  "Số đơn: [APP_SERIAL-"
+ ],
+ "irreversible": ["001099000001", "05/03/1990"]
+}

@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+.venv/
+*.egg-info/
+dist/
+build/
+# A vault written by `pii-core document --vault-out` holds real values. Never
+# keep one in the tree.
+*.vault.json

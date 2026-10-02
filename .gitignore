@@ -1,0 +1,54 @@
+
+!.env.example
+#
+# --- BÍ MẬT: KHÔNG BAO GIỜ ĐƯA VÀO GIT ---
+# --- DỮ LIỆU: KHÔNG BAO GIỜ ĐƯA VÀO GIT ---
+# --- Model tải về (hàng GB) ---
+# --- macOS ---
+# --- uv / Python ---
+# Kế hoạch/ghi chú của agent — bản nháp làm việc, không phải mã nguồn
+# Kết quả đo: sinh lại được, và có thể lẫn đoạn văn bản của khách
+# Mẫu .env: trước đây từng lỡ chứa khoá thật. Không theo dõi bằng git nữa —
+# Một lần commit nhầm là dữ liệu nằm vĩnh viễn trong lịch sử git — kể cả khi
+# `.env` chứa khoá API. Khoá lọt vào lịch sử git là khoá phải thu hồi, kể cả
+# `data/benchmarks/` là bộ công khai (MDPBench ~176 MB): không bí mật, nhưng
+# `data/gold/` chứa tài liệu THẬT của khách hàng (ảnh + bản gõ tay).
+# khi repo còn riêng tư — nó đã nằm trong mọi bản clone.
+# một tệp "mẫu" nằm trong repo là chỗ khoá dễ lọt vào nhất.
+# nhị phân Swift đã biên dịch
+# quá nặng cho git và tải lại được bất cứ lúc nào.
+# xoá ở commit sau. Chặn ở đây, trước khi có tệp nào, là cách duy nhất chắc chắn.
+*.egg-info/
+*.gguf
+*.json.gz
+*.py[cod]
+*.safetensors
+.DS_Store
+.coverage
+.env
+.env.*
+.env.example
+.hermes/
+.pytest_cache/
+.venv/
+__pycache__/
+build/
+data/
+dist/
+htmlcov/
+models/
+node_modules
+reports/
+swift/*.dSYM
+swift/vision_ocr
+web/dist/
+.run/
+# --- pii-core/ ---
+# `data/` ở trên khớp mọi tầng; bảng bằng chứng của pii-core là mã nguồn.
+!pii-core/src/pii_core/data/
+# Khoá và roster của pii-core là dữ liệu chạy, nằm ngoài cây
+# (PII_CORE_KEY / PII_CORE_KEY_FILE, PII_CORE_ROSTER → ~/.private/pii-core/).
+# Chặn cả bản lỡ đặt trong repo.
+*.key
+roster.json
+*.roster.json

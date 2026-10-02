@@ -1,0 +1,970 @@
+/* Đối chiếu ADE — bảng màu lấy theo playground: nền trắng, viền xám nhạt,
+   CAM cho phần tử đang chọn, XANH cho span. */
+
+:root {
+  /* CẦU NỐI sang hệ chủ đề.
+   *
+   * style.css này viết trước khi có theme.css, và dùng bộ tên riêng
+   * (--bg, --bg-soft, --bg-sunk, --accent-bg, --span…). Đổi tên ở 400 chỗ
+   * trong tệp thì mỗi chỗ sót là một mảng màu lạc lõng — kiểu lỗi chỉ phát
+   * hiện bằng mắt, và đã mất một vòng vì đúng chuyện này (trang ra trắng
+   * toát mà console không một lỗi).
+   *
+   * Nên giữ nguyên tên cũ, chỉ trỏ chúng vào token của chủ đề. Đổi chủ đề
+   * là mọi thứ đi theo, kể cả các luật chưa bao giờ được đọc lại.
+   */
+  --bg:        var(--bg-app);
+  --bg-soft:   var(--bg-panel);
+  --bg-sunk:   var(--bg-raise);
+  --accent-bg: var(--accent-dim);
+
+  /* Màu span (khung từng dòng) là màu VẼ LÊN ẢNH tài liệu, không phải màu
+   * giao diện — ảnh luôn là giấy trắng chữ đen bất kể chủ đề. Giữ cố định,
+   * xem ghi chú đầu theme.css. */
+  --span:      #0ca678;
+  --span-bg:   #e6fcf5;
+
+  --font: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+}
+
+/* ── hidden phải THẮNG mọi luật display ──────────────────────────────────
+ *
+ * Trình duyệt có sẵn `[hidden] { display: none }`, nhưng luật đó độ ưu tiên
+ * THẤP NHẤT. Bất kỳ `.lop { display: flex }` nào của ta cũng đè lên nó, và
+ * khi đó `el.hidden = true` đặt đúng thuộc tính mà phần tử VẪN HIỆN.
+ *
+ * Đã hỏng thật: bấm ✕ đóng file manager, `fmOverlay.hidden` thành true,
+ * nhưng `.fmOverlay { display: flex }` giữ nó phủ kín màn hình — người dùng
+ * thấy kẹt ở khung trắng, còn test kiểm `.hidden` thì báo xanh.
+ *
+ * Luật này từng bị XOÁ NHẦM một lần nữa khi thay khối `:root` lúc chuyển
+ * sang Vite. Test `test_hidden_phai_thang_moi_luat_display` bắt được.
+ *
+ * `!important` ở đây là đúng chỗ: "ẩn" phải thắng vô điều kiện.
+ */
+[hidden] { display: none !important; }
+
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0; height: 100%;
+  font-family: var(--font); font-size: 14px;
+  color: var(--fg); background: var(--bg);
+}
+
+button { font: inherit; color: inherit; cursor: pointer; }
+.spacer { flex: 1; }
+.muted  { color: var(--fg-mute); }
+.pad    { padding: 16px; }
+
+/* ── thanh trên ─────────────────────────────────────────────────────── */
+.topbar {
+  display: flex; align-items: center; gap: 14px;
+  height: 52px; padding: 0 16px;
+  border-bottom: 1px solid var(--line); background: var(--bg);
+}
+.brand { font-weight: 600; white-space: nowrap; }
+.crumb { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.crumb .sep { color: var(--fg-mute); }
+.crumb .doc { font-weight: 600; overflow: hidden; text-overflow: ellipsis;
+              white-space: nowrap; max-width: 42ch; }
+
+.pager { display: flex; align-items: center; gap: 6px; }
+.pager button {
+  width: 26px; height: 26px; border: 1px solid var(--line);
+  border-radius: 6px; background: var(--bg); line-height: 1;
+}
+.pager button:disabled { opacity: .35; cursor: default; }
+.pager span { font-variant-numeric: tabular-nums; min-width: 52px;
+              text-align: center; }
+
+.modelTag {
+  font-size: 12px; color: var(--fg-mute);
+  border: 1px solid var(--line); border-radius: 999px; padding: 4px 10px;
+  white-space: nowrap;
+}
+
+/* ── bố cục 3 cột ───────────────────────────────────────────────────── */
+.layout {
+  display: grid;
+  /* Năm rãnh: cây | thanh kéo | ảnh | thanh kéo | chunk.
+     Chiều rộng hai cột ngoài do splitter.js đặt qua biến, và được nhớ lại
+     giữa các lần mở. `minmax(0, 1fr)` cho cột giữa: KHÔNG có `minmax(0,…)`
+     thì nội dung rộng (ảnh trang 1275px) sẽ đẩy lưới tràn ra ngoài. */
+  grid-template-columns:
+    var(--w-tree, 230px) 6px minmax(0, 1fr) 6px var(--w-panel, 460px);
+  height: calc(100vh - 52px);
+}
+
+/* Ba cột tối thiểu cộng lại là 990px. Dưới mức đó lưới tràn ra ngoài màn
+   hình và cột phải bị cắt mất — nút Markdown/JSON nằm ngoài vùng nhìn, không
+   cuộn tới được.
+
+   Dưới 1100px: bỏ cột ẢNH, giữ cây hồ sơ + bảng chép. Ảnh vẫn xem được qua
+   dải thumbnail dưới chân. Người soát trên màn hình hẹp cần đọc CHỮ hơn là
+   nhìn ảnh — ảnh còn nguyên khi họ mở rộng cửa sổ. */
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: var(--w-tree, 200px) 6px minmax(0, 1fr);
+  }
+  .splitter-panel { display: none; }
+  .layout > .viewer { display: none; }
+}
+
+/* Dưới 700px thì THU HẸP cây hồ sơ, KHÔNG ẩn nó.
+ *
+ * Bản đầu đặt `.tree { display: none }` ở đây, và đó là lỗi: cây hồ sơ là
+ * thứ DUY NHẤT để điều hướng giữa 36 tài liệu. Ẩn nó đi thì trang mở ra
+ * trống trơn — dữ liệu vẫn nằm trong DOM, người dùng chỉ không thấy gì và
+ * không có cách nào lấy lại.
+ *
+ * Quy tắc rút ra: ở màn hình hẹp, bỏ thứ TRANG TRÍ (ảnh xem trước) chứ không
+ * bao giờ bỏ thứ ĐIỀU HƯỚNG.
+ */
+@media (max-width: 700px) {
+  .layout { grid-template-columns: 148px 6px minmax(0, 1fr); }
+  .tree { font-size: 12px; }
+  .treeBody .docItem { padding-left: 8px; }
+}
+
+/* ── cây hồ sơ ──────────────────────────────────────────────────────── */
+.tree { border-right: 1px solid var(--line); background: var(--bg-soft);
+        display: flex; flex-direction: column; min-height: 0; }
+.treeHead {
+  padding: 10px 14px; font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .04em; color: var(--fg-mute);
+  border-bottom: 1px solid var(--line-soft);
+}
+.treeBody { overflow-y: auto; padding: 6px 0 20px; }
+
+.matter { padding: 9px 14px 4px; font-size: 12px; font-weight: 600;
+          color: var(--fg-mute); }
+.docItem {
+  display: block; width: 100%; text-align: left;
+  padding: 6px 14px 6px 22px; border: 0; background: none;
+  font-size: 13px; line-height: 1.35;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.docItem:hover { background: var(--bg-sunk); }
+.docItem.on {
+  background: var(--accent-bg); color: var(--accent); font-weight: 600;
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+/* ── khung ảnh ──────────────────────────────────────────────────────── */
+.viewer { display: flex; flex-direction: column; min-width: 0; min-height: 0;
+          border-right: 1px solid var(--line); }
+
+/* ── thanh tài liệu: đường dẫn + phóng to + chuyển trang ─────────────── */
+.docBar {
+  display: flex; align-items: center; gap: 12px;
+  height: 36px; padding: 0 10px; flex: none;
+  border-bottom: 1px solid var(--line); background: var(--bg);
+}
+
+.docPath {
+  flex: 1; min-width: 0; display: flex; align-items: baseline;
+  font-size: 12px; border-radius: 6px;
+  padding: 3px 6px; margin-left: -6px;
+}
+.docPath.coPath { cursor: pointer; }
+.docPath.coPath:hover { background: var(--bg-hover); }
+
+/* Thư mục: co được, và cắt ở ĐẦU chứ không ở đuôi.
+   `direction: rtl` đẩy dấu … về bên trái; `<bdi>` bên trong giữ cho chuỗi
+   không bị đảo. Cắt đuôi thì mất đúng đoạn gần tên tệp — tức đoạn có ích
+   nhất để phân biệt hai hồ sơ. */
+.docPath .pthDirs {
+  direction: rtl; text-align: left;
+  overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+  color: var(--fg-mute); min-width: 0; flex: 0 1 auto;
+}
+/* Tên tệp KHÔNG co (`flex: none`): đây là thứ duy nhất trên thanh không
+   được phép biến mất khi cột hẹp lại. */
+.docPath .pthFile { font-weight: 600; color: var(--fg-strong); flex: none;
+                    white-space: nowrap; }
+.docPath .pthMay { color: var(--fg-mute); flex: none; margin-left: 8px;
+                   font-size: 11px; white-space: nowrap; }
+.docPath.daChep { background: #3fb95022; }
+.docPath.daChep::after { content: 'đã chép'; margin-left: 8px; flex: none;
+                         color: var(--ok); font-size: 11px; }
+/* Chép hỏng phải NÓI ra. Bản trước im lặng không phản hồi, nên người dùng
+   bấm mãi mà không biết nó chết — xem ghi chú `chep()` trong docbar.js. */
+.docPath.chepLoi { background: #e5484d22; }
+.docPath.chepLoi::after { content: 'không chép được — bấm Ctrl+C';
+                          margin-left: 8px; flex: none;
+                          color: var(--err, #e5484d); font-size: 11px; }
+
+.zoomGrp { display: flex; align-items: center; gap: 2px; flex: none; }
+.zoomGrp button {
+  height: 24px; min-width: 24px; padding: 0 4px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--fg); line-height: 1;
+  font-size: 13px; cursor: pointer;
+}
+.zoomGrp button:hover:not(:disabled) { background: var(--bg-hover); }
+.zoomGrp button:disabled { opacity: .35; cursor: default; }
+/* `tabular-nums` + bề rộng cố định: không có nó, ô nhảy qua lại mỗi khi số
+   đổi từ 100% sang 75% và hai nút +/− trượt theo dưới con trỏ. */
+#zoomLabel { min-width: 48px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.zoomGrp .zoomFit { margin-left: 4px; }
+
+/* `justify-content` KHÔNG dùng được ở đây, dù nó là cách canh giữa quen tay.
+   Khi nội dung rộng hơn vùng cuộn, flex canh giữa đẩy phần thừa ra CẢ HAI
+   bên, mà cuộn chỉ với tới bên phải — mép trái của trang phóng to bị cắt và
+   không có cách nào xem được. `margin: auto` trên con lại co về 0 đúng lúc
+   nội dung tràn, nên vừa canh giữa khi nhỏ vừa cuộn đủ khi to. */
+.stage { flex: 1; overflow: auto; padding: 20px;
+         display: flex; align-items: flex-start;
+         background: var(--bg-sunk); min-height: 0; }
+.stage > * { margin: auto; }
+.placeholder { margin: auto; color: var(--fg-mute); }
+
+/* `position: relative` + canvas phủ tuyệt đối: canvas phải nằm ĐÚNG trên ảnh,
+   nếu không mọi toạ độ vẽ ra đều lệch một khoảng cố định. */
+.imgWrap { position: relative; line-height: 0; box-shadow: 0 1px 6px #00000018;
+           background: #fff; flex: none; }
+/* `width: 100%` theo khung bọc, KHÔNG phải `max-width: 100%`.
+   `max-width` khoá ảnh ở bề rộng cột, nên phóng lên 200% thì khung bọc rộng
+   ra mà ảnh đứng yên — nút + bấm mãi không thấy gì đổi. Bề rộng thật do JS
+   đặt trên `.imgWrap` (xem `nguonAnhTrang.datZoom`). */
+.imgWrap img { display: block; width: 100%; height: auto; }
+.imgWrap canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+/* ── dải Files ──────────────────────────────────────────────────────── */
+.files { border-top: 1px solid var(--line); background: var(--bg); }
+.files[hidden] { display: none; }
+.filesHead {
+  display: flex; width: 100%; align-items: center; justify-content: space-between;
+  padding: 8px 14px; border: 0; background: none;
+  font-size: 12px; font-weight: 600; color: var(--fg-mute);
+}
+.filesHead .chev { transition: transform .15s; }
+.filesHead[aria-expanded="false"] .chev { transform: rotate(-90deg); }
+.filesStrip { display: flex; gap: 8px; padding: 0 14px 12px; overflow-x: auto; }
+.filesStrip[hidden] { display: none; }
+.thumb {
+  width: 58px; height: 74px; flex: none; padding: 0;
+  border: 1px solid var(--line); border-radius: 6px; overflow: hidden;
+  background: var(--bg-soft);
+}
+.thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.thumb.on { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-bg); }
+
+/* ── cột chunk ──────────────────────────────────────────────────────── */
+.panel { display: flex; flex-direction: column; min-width: 0; min-height: 0; }
+.panelBar {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+}
+.seg { display: flex; border: 1px solid var(--line); border-radius: 7px;
+       overflow: hidden; }
+.seg button { padding: 5px 12px; border: 0; background: var(--bg);
+              font-size: 13px; }
+.seg button + button { border-left: 1px solid var(--line); }
+.seg button.on { background: var(--bg-sunk); font-weight: 600; }
+
+.layers { display: flex; gap: 6px; }
+.layers button {
+  padding: 4px 9px; font-size: 12px;
+  border: 1px solid var(--line); border-radius: 6px;
+  background: var(--bg); color: var(--fg-mute);
+}
+.layers button.on { border-color: var(--accent); color: var(--accent);
+                    background: var(--accent-bg); }
+
+.chunks { flex: 1; overflow-y: auto; padding: 12px; min-height: 0; }
+
+/* ── thẻ chunk ──────────────────────────────────────────────────────── */
+.chunk {
+  border: 1px solid var(--line); border-radius: var(--radius);
+  margin-bottom: 10px; background: var(--bg); overflow: hidden;
+}
+.chunk.on { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-bg); }
+
+.chunkHead {
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px; border-bottom: 1px solid var(--line-soft);
+  background: var(--bg-soft);
+}
+.badge {
+  font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 5px;
+  background: var(--bg-sunk); color: var(--fg-mute); white-space: nowrap;
+}
+.chunk.on .badge { background: var(--accent); color: #fff; }
+
+.chunkActs { display: flex; gap: 4px; margin-left: auto; }
+.chunkActs button {
+  border: 1px solid transparent; border-radius: 5px; background: none;
+  padding: 2px 7px; font-size: 12px; color: var(--fg-mute);
+}
+.chunkActs button:hover { border-color: var(--line); background: var(--bg); }
+.chunkActs button.good { color: var(--span); border-color: var(--span); }
+.chunkActs button.bad  { color: var(--accent); border-color: var(--accent); }
+
+.chunkBody { padding: 9px 11px; white-space: pre-wrap; word-break: break-word;
+             line-height: 1.55; }
+.chunkBody.mono { font-family: var(--mono); font-size: 12px; white-space: pre;
+                  overflow-x: auto; }
+
+/* Mỗi segment atomic là một `<span>` bấm được — đây là mức neo thứ hai. */
+.seg-atom { border-radius: 3px; }
+.seg-atom:hover { background: var(--span-bg); box-shadow: 0 0 0 1px var(--span); }
+.seg-atom.on    { background: var(--span-bg); box-shadow: 0 0 0 1px var(--span); }
+
+/* Chip cho placeholder ADE chèn ([VISUAL_TEXT], [QR_CODE]…) — phải nhìn khác
+   chữ thật, kẻo có người chép nhầm chúng vào ground truth. */
+.ph {
+  display: inline-block; font-size: 11px; font-family: var(--mono);
+  padding: 0 6px; border-radius: 4px;
+  background: var(--bg-sunk); color: var(--fg-mute);
+  border: 1px dashed var(--line);
+}
+
+/* ── tô thông tin nhạy cảm ───────────────────────────────────────────────
+   Hai cách xử lý phải nhìn ra KHÁC nhau ngay, vì hệ quả pháp lý khác nhau:
+   bút danh hoá còn hoàn nguyên được (vẫn là dữ liệu cá nhân theo GDPR),
+   ẩn danh hoá thì không. Dùng gạch chân dày thay vì nền đậm — nền đậm che
+   mất chữ, mà đây là trang để ĐỌC chữ. */
+mark.pii {
+  background: none; color: inherit;
+  border-bottom: 2px solid transparent;
+  border-radius: 2px; padding: 0 1px; cursor: help;
+}
+/* Dùng token chủ đề, KHÔNG mã màu cứng: chủ đề ở đây là nord/gruvbox/slate/
+   paper chứ không có "dark", nên một luật `[data-theme="dark"]` sẽ không bao
+   giờ chạy và nền cam nhạt sẽ chói trên mọi chủ đề tối. */
+/* Phân biệt bằng KIỂU gạch chân, không chỉ bằng màu: đo màu thật trên chủ đề
+   slate thì cam (240,136,62) và hổ phách (210,153,34) gần nhau, người bình
+   thường đã khó phân, người mù màu đỏ-lục thì không phân được. Gạch liền =
+   bút danh (còn hoàn nguyên); gạch đứt = ẩn danh (đứt đoạn, mất vĩnh viễn). */
+mark.pii.pseudo {
+  border-bottom-style: solid; border-bottom-color: var(--accent);
+  background: var(--accent-dim);
+}
+mark.pii.anon {
+  border-bottom-style: dashed; border-bottom-color: var(--warn);
+  background: var(--bg-hover);
+}
+
+.pii-tag {
+  font-size: 11px; padding: 1px 7px; border-radius: 999px;
+  border: 1px solid var(--line); white-space: nowrap;
+}
+.pii-tag.pseudo { background: var(--accent-dim); border-color: var(--accent); }
+.pii-tag.anon   { background: var(--bg-hover);  border-color: var(--warn); }
+
+.piiPanel {
+  margin: 10px 11px 0; border: 1px solid var(--line);
+  border-radius: 8px; background: var(--bg-sunk); overflow: hidden;
+}
+.pp-head {
+  padding: 8px 11px; font-size: 12px; font-weight: 600;
+  border-bottom: 1px solid var(--line);
+}
+.pp-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+.pp-tbl th {
+  text-align: left; font-weight: 500; color: var(--fg-mute);
+  padding: 5px 11px; border-bottom: 1px solid var(--line-soft);
+}
+.pp-tbl td { padding: 5px 11px; border-bottom: 1px solid var(--line-soft); }
+.pp-tbl tr:last-child td { border-bottom: none; }
+.pp-tbl td.num, .pp-tbl th.num { text-align: right; font-family: var(--mono); }
+.pp-legend {
+  display: flex; gap: 14px; flex-wrap: wrap;
+  padding: 7px 11px; font-size: 11px;
+  border-top: 1px solid var(--line-soft);
+}
+.pp-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.pp-legend i {
+  width: 22px; height: 0; display: inline-block;
+  border-bottom: 2px solid currentColor;
+}
+.pp-legend i.pseudo { color: var(--accent); border-bottom-style: solid; }
+.pp-legend i.anon   { color: var(--warn);   border-bottom-style: dashed; }
+
+.chePanel .cheNut { justify-content: space-between; }
+.chePanel .cheNut label { display: inline-flex; gap: 5px; align-items: center; cursor: pointer; }
+.chePanel .cheNut a { color: var(--accent); text-decoration: none; font-weight: 600; }
+.cheTrang {
+  font: 11px var(--mono); padding: 0 5px; margin: 0 3px 2px 0;
+  border: 1px solid var(--line); border-radius: 4px;
+  background: transparent; color: var(--fg); cursor: pointer;
+}
+/* Màu hành động pii-core do JS đặt từng thẻ (`MAU_HD` trong app.js). */
+.hdTag, .hdO {
+  --hd: #868e96;
+}
+.hdTag { display: inline-block; padding: 0 5px; border-radius: 3px; font-size: 10px;
+         font-family: var(--mono); color: #fff; background: var(--hd); }
+.hdO { display: inline-block; width: 12px; height: 9px; border: 1.5px solid var(--hd);
+       background: color-mix(in srgb, var(--hd) 15%, transparent); }
+.cheTrang.on { border-color: var(--accent); color: var(--accent); }
+
+.pp-foot {
+  padding: 7px 11px; font-size: 11px; color: var(--fg-mute);
+  border-top: 1px solid var(--line);
+}
+
+.coords {
+  font-family: var(--mono); font-size: 11px; color: var(--fg-mute);
+  padding: 6px 11px; border-top: 1px dashed var(--line-soft);
+  background: var(--bg-soft);
+}
+
+.fixBox { padding: 9px 11px; border-top: 1px solid var(--line-soft);
+          background: var(--bg-soft); }
+.fixBox textarea {
+  width: 100%; min-height: 72px; font: 13px/1.5 var(--mono);
+  border: 1px solid var(--line); border-radius: 6px; padding: 7px;
+  resize: vertical; background: var(--bg);
+}
+.fixBox .row { display: flex; gap: 8px; margin-top: 7px; }
+.fixBox button {
+  padding: 5px 12px; border-radius: 6px; border: 1px solid var(--line);
+  background: var(--bg); font-size: 13px;
+}
+.fixBox button.primary { background: var(--accent); border-color: var(--accent);
+                         color: #fff; font-weight: 600; }
+
+.crop { display: block; max-width: 100%; margin-top: 7px;
+        border: 1px solid var(--line); border-radius: 6px; }
+
+.panelFoot {
+  padding: 8px 14px; border-top: 1px solid var(--line);
+  font-size: 12px; text-align: right; background: var(--bg-soft);
+}
+
+/* ── lớp sửa chính tả ────────────────────────────────────────────────── */
+
+/* Huy hiệu trên thẻ đã bị lớp sửa đụng vào. Xanh lá chứ không cam: cam đang
+   mang nghĩa "phần tử đang chọn", trùng màu thì hai khái niệm khác nhau nhìn
+   như một. */
+.fixBadge {
+  background: #e7f6ec; color: #1a7f3c;
+  border: 1px solid #b7e3c5;
+}
+.chunk.on .fixBadge { background: #1a7f3c; color: #fff; border-color: #1a7f3c; }
+
+/* Từ mà model đã đổi. Gạch chân chấm chứ không tô nền đậm — nền đậm đọc
+   thành "cảnh báo", trong khi đây là thông tin: chữ này đã đổi, rê lên xem
+   bản gốc. Người soát cần đọc được câu, không phải né các mảng màu. */
+.fixed {
+  background: #e7f6ec;
+  border-bottom: 2px dotted #1a7f3c;
+  border-radius: 3px;
+  cursor: help;
+}
+.fixed:hover { background: #cdead8; }
+
+/* ── chọn engine (góc trên trái) ─────────────────────────────────────── */
+.engineSel { display: flex; gap: 2px; margin-left: 14px; }
+.engineSel button {
+  border: 1px solid var(--line); background: var(--bg-sunk);
+  color: var(--fg-mute); font-size: 12px; font-weight: 600;
+  padding: 3px 12px; border-radius: 6px;
+}
+.engineSel button.on {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+
+/* Engine chưa chạy cho tài liệu này: làm mờ chứ KHÔNG ẩn — ẩn thì người dùng
+   tưởng engine không tồn tại, làm mờ nói đúng "có nhưng chưa chạy". */
+.engineSel button.missing { opacity: .35; cursor: not-allowed; }
+
+/* ── file manager ────────────────────────────────────────────────────── */
+.browseBtn {
+  margin-left: 14px; border: 1px solid var(--line); background: var(--bg-sunk);
+  color: var(--fg); font-size: 12px; font-weight: 600;
+  padding: 4px 12px; border-radius: 6px;
+}
+.browseBtn:hover { background: var(--accent); color: #fff; border-color: var(--accent); }
+
+.fmOverlay {
+  position: fixed; inset: 0; background: rgba(20,20,22,.45);
+  display: flex; align-items: center; justify-content: center; z-index: 50;
+}
+
+.fmPanel {
+  width: min(900px, 92vw); height: min(680px, 86vh);
+  background: var(--bg); border-radius: 12px; overflow: hidden;
+  display: flex; flex-direction: column;
+  box-shadow: 0 24px 60px rgba(0,0,0,.3);
+}
+.fmHead {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 14px; border-bottom: 1px solid var(--line);
+  background: var(--bg-sunk);
+}
+.fmHead button {
+  border: 1px solid var(--line); background: var(--bg); border-radius: 6px;
+  padding: 3px 10px; font-size: 13px; color: var(--fg);
+}
+.fmPath {
+  flex: 1; font-size: 12px; color: var(--fg-mute); font-family: var(--mono);
+  white-space: nowrap; overflow: hidden;
+  /* Cắt ở ĐẦU chứ không ở cuối: đuôi đường dẫn (thư mục đang đứng) là thứ
+     cần thấy, phần gốc thì luôn giống nhau. `direction: rtl` làm được điều
+     đó nhưng vẽ dấu `/` sai chỗ trên chuỗi có dấu tiếng Việt, nên dùng
+     flex-direction thay vì đảo chiều văn bản. */
+  display: flex; flex-direction: row-reverse; justify-content: flex-end;
+}
+.fmEngine { display: flex; align-items: center; gap: 6px; font-size: 12px; flex: none; }
+
+/* Màn hình hẹp: hàng tiêu đề có 4 thứ (nút lên, đường dẫn, chọn engine, nút
+   đóng) chen nhau và đẩy nút ✕ ra ngoài. Xuống hai dòng thay vì ép nhỏ. */
+@media (max-width: 700px) {
+  .fmPanel { width: 96vw; height: 92vh; }
+  .fmHead { flex-wrap: wrap; }
+  .fmPath { order: 3; flex-basis: 100%; }
+  .fmEngine label { display: none; }
+}
+.fmEngine label { color: var(--fg-mute); }
+.fmEngine select {
+  border: 1px solid var(--line); border-radius: 6px; padding: 3px 6px;
+  font-size: 12px; background: var(--bg); color: var(--fg);
+}
+
+.fmList { flex: 1; overflow: auto; padding: 6px 0; }
+.fmRow {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 16px; font-size: 13px; cursor: pointer;
+}
+.fmRow:hover { background: var(--bg-sunk); }
+.fmRow .ic { width: 18px; text-align: center; }
+.fmRow .nm { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fmRow .sz { color: var(--fg-mute); font-size: 11px; font-family: var(--mono); }
+
+/* Trạng thái engine: chấm màu, không phải chữ — 3 engine × 36 tệp mà viết
+   chữ thì hàng nào cũng dài hơn tên tệp. */
+.fmDots { display: flex; gap: 3px; }
+.fmDot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--line); border: 1px solid var(--line);
+}
+.fmDot.on { background: #1a7f3c; border-color: #1a7f3c; }
+.fmRow.done .nm { color: var(--fg); }
+.fmRow.todo .nm { color: var(--fg-mute); }
+
+.fmProg { padding: 12px 16px; border-top: 1px solid var(--line); background: var(--bg-sunk); }
+.fmProgHead { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+.fmProgHead span:first-child { font-weight: 600; }
+.fmBar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.fmBarFill {
+  height: 100%; width: 0; background: var(--accent); border-radius: 3px;
+  transition: width .25s ease;
+}
+.fmProgMsg { margin-top: 6px; font-size: 11px; color: var(--fg-mute); font-family: var(--mono); }
+.fmProgMsg.err { color: #c0392b; }
+
+/* Chấm trạng thái là NÚT bấm được: bấm chấm xám = chạy engine đó, bấm chấm
+   xanh = mở xem bản của engine đó. Không có nó thì chạy xong một engine là
+   tệp khoá luôn. */
+.fmDot { padding: 0; cursor: pointer; transition: transform .12s; }
+.fmDot:hover { transform: scale(1.5); border-color: var(--accent); }
+.fmDot.on:hover { border-color: #0f5f2b; }
+
+/* Tệp không chạy OCR thẳng được: mờ đi nhưng VẪN HIỆN — ẩn thì người dùng
+   không biết hồ sơ có gì, và không phân biệt được "không có tệp" với "có
+   nhưng công cụ không đọc được". */
+.fmRow.khac { cursor: default; }
+.fmRow.khac .nm { color: var(--fg-mute); }
+.fmRow.khac .sz { font-style: italic; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   THANH KÉO CHIA CỘT
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Vùng bấm phải RỘNG HƠN vạch nhìn thấy. Rãnh lưới 6px, nhưng dùng
+   ::after để nới vùng bắt chuột ra 5px mỗi bên — vạch 1px trông gọn mà
+   vẫn trúng chuột ngay lần đầu. Thanh kéo khó trúng là lỗi kinh điển. */
+.splitter {
+  position: relative;
+  cursor: col-resize;
+  background: var(--line-soft);
+  transition: background .12s;
+}
+.splitter::after {
+  content: '';
+  position: absolute;
+  inset: 0 -5px;
+  z-index: 5;
+}
+.splitter:hover, .splitter.on { background: var(--accent); }
+
+/* Trong lúc kéo: chặn bôi đen chữ và giữ con trỏ dạng kéo trên TOÀN trang.
+   Không có luật này thì kéo qua vùng chữ sẽ bôi đen cả đoạn văn. */
+body.dang-keo, body.dang-keo * {
+  user-select: none !important;
+  cursor: col-resize !important;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   BẢNG CHỌN CHỦ ĐỀ
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.iconBtn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg-mute);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 15px;
+  cursor: pointer;
+  transition: all .12s;
+}
+.iconBtn:hover, .iconBtn.on {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: var(--accent-dim);
+}
+
+.themePanel {
+  position: fixed;
+  /* Cao hơn lớp phủ trình xem (70). Bảng chọn chủ đề là thứ NGƯỜI DÙNG vừa
+     bấm — nó phải nằm trên mọi thứ, kể cả khi mở lúc đang xem tài liệu.
+     Để 60 thì trình xem che mất và nút bấm như hỏng. */
+  z-index: 80;
+  width: 260px;
+  background: var(--bg-float);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.themeHead {
+  padding: 9px 12px;
+  font-size: 11px;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+  border-bottom: 1px solid var(--line-soft);
+}
+.themeList { padding: 5px; }
+.themeItem {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px 9px;
+  background: transparent;
+  border: 0;
+  border-radius: 7px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--fg);
+}
+.themeItem:hover { background: var(--bg-hover); }
+.themeItem.on { background: var(--accent-dim); }
+
+/* Ô màu xem trước: ba dải cho nền / panel / màu nhấn. Giá trị viết thẳng
+   vì đây là XEM TRƯỚC chủ đề khác — dùng biến thì cả bốn ô sẽ cùng màu
+   của chủ đề đang bật, và bảng chọn mất hết ý nghĩa. */
+.themeSwatch {
+  display: flex;
+  width: 34px; height: 22px;
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  flex: none;
+}
+/* `display: block` là BẮT BUỘC: <i> mặc định là inline, và `flex: 1` không
+   có tác dụng lên phần tử inline — ba dải màu thu về rỗng và ô xem trước
+   trông như một khung trống. */
+.themeSwatch i { flex: 1; display: block; }
+[data-sw="slate"]   .sw-bg { background: #0f1115 } [data-sw="slate"]   .sw-panel { background: #1c212c } [data-sw="slate"]   .sw-accent { background: #f0883e }
+[data-sw="nord"]    .sw-bg { background: #2e3440 } [data-sw="nord"]    .sw-panel { background: #3b4252 } [data-sw="nord"]    .sw-accent { background: #88c0d0 }
+[data-sw="gruvbox"] .sw-bg { background: #1d2021 } [data-sw="gruvbox"] .sw-panel { background: #32302f } [data-sw="gruvbox"] .sw-accent { background: #fe8019 }
+[data-sw="paper"]   .sw-bg { background: #f6f7f9 } [data-sw="paper"]   .sw-panel { background: #ffffff } [data-sw="paper"]   .sw-accent { background: #c2410c }
+
+.themeText { flex: 1; min-width: 0; }
+.themeText b { display: block; font-size: 13px; font-weight: 600; color: var(--fg-strong); }
+.themeText small { display: block; font-size: 11px; color: var(--fg-faint); }
+.themeTick { color: var(--accent); font-size: 13px; opacity: 0; }
+.themeItem.on .themeTick { opacity: 1; }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TRÌNH XEM ĐA ĐỊNH DẠNG
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.vwOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: #000000b3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+.vwPanel {
+  display: flex;
+  flex-direction: column;
+  width: min(1200px, 94vw);
+  height: min(860px, 92vh);
+  background: var(--bg-panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+.vwTitle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+}
+.vwName { flex: 1; font-size: 13px; font-weight: 600; color: var(--fg-strong);
+          overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vwClose { background: transparent; border: 0; color: var(--fg-mute);
+           font-size: 15px; cursor: pointer; padding: 3px 7px; border-radius: 6px; }
+.vwClose:hover { background: var(--bg-hover); color: var(--err); }
+
+.vwBody { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.vwBar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--line-soft);
+  background: var(--bg-raise);
+}
+.vwBtn, .vwZoom {
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--fg-mute);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 13px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.vwBtn:hover, .vwZoom:hover { background: var(--bg-hover); color: var(--fg-strong); }
+.vwZoom { min-width: 54px; font-size: 12px; }
+.vwSep { width: 1px; height: 17px; background: var(--line); margin: 0 5px; }
+.vwPage { font-size: 12px; color: var(--fg-mute); min-width: 52px; text-align: center;
+          font-variant-numeric: tabular-nums; }
+.vwSpacer { flex: 1; }
+.vwNote { font-size: 11px; color: var(--fg-faint); }
+
+/* Kéo để di chuyển trang. Vùng cuộn thật của tài liệu đã OCR là `.stage`
+   (chứa `#imgWrap`: ảnh trang + canvas lớp phủ) — xem `ganKeoDiChuyen`. */
+.stage:has(#imgWrap:not([hidden])) { cursor: grab; }
+/* PHẢI DÙNG `:has()` Ở CẢ HAI VẾ.
+   Độ đặc hiệu của `:has()` tính theo đối số BÊN TRONG nó, nên quy tắc trên là
+   (1,1,0) vì chứa `#imgWrap` — một selector class thường như `.stage.dangKeo`
+   (0,2,0) KHÔNG thắng nổi, và con trỏ vẫn hiện `grab` suốt lúc kéo dù class
+   `dangKeo` đã được gắn đúng (đã đo trong Chromium thật).
+   Lặp lại `:has(...)` để hai vế cùng gốc (1,1,0), rồi `.dangKeo` nâng lên
+   (1,2,0) — thắng chắc chắn, không phụ thuộc thứ tự dòng.
+   Bấm giữ mà con trỏ không đổi thì người dùng không biết mình đang kéo. */
+.stage:has(#imgWrap:not([hidden])).dangKeo,
+.stage:has(#imgWrap:not([hidden])).dangKeo * { cursor: grabbing; }
+/* Đang kéo thì cấm bôi đen: kéo qua chữ mà dính bôi đen sẽ ra vệt xanh loang. */
+.stage.dangKeo { user-select: none; }
+
+.vwScroll { flex: 1; overflow: auto; padding: 16px; background: var(--bg-app); }
+.vwStage { display: inline-block; min-width: 100%; }
+.vwImg, .vwCanvas {
+  display: block;
+  max-width: none;
+  box-shadow: 0 2px 16px #00000055;
+  border-radius: 3px;
+  background: #fff;
+}
+.vwLoad, .vwErr { padding: 28px; color: var(--fg-mute); font-size: 13px; }
+.vwErr { color: var(--err); }
+
+/* Tài liệu docx/xlsx dựng thành HTML: nền TRẮNG cố định, không theo chủ đề.
+   Đây là nội dung tài liệu, không phải giao diện — người soát cần thấy nó
+   như khi mở bằng Word. */
+.vwDoc {
+  background: #fff;
+  color: #1a1a1a;
+  padding: 36px 44px;
+  max-width: 860px;
+  border-radius: 3px;
+  box-shadow: 0 2px 16px #00000055;
+  font-size: 14px;
+  line-height: 1.65;
+}
+.vwDoc img { max-width: 100%; height: auto; }
+.vwDoc table { border-collapse: collapse; margin: 12px 0; }
+.vwDoc td, .vwDoc th { border: 1px solid #d0d0d0; padding: 5px 9px; font-size: 13px; }
+.vwDoc h1, .vwDoc h2, .vwDoc h3 { color: #111; }
+.sheetName { margin: 20px 0 7px; font-size: 13px; color: #555;
+             border-bottom: 2px solid var(--accent); display: inline-block; padding-bottom: 3px; }
+.xlsxTable { font-variant-numeric: tabular-nums; }
+
+.vwText {
+  background: #fff; color: #1a1a1a;
+  padding: 26px 32px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  max-width: 900px;
+}
+
+/* Tệp Office: xem được nội dung nên KHÔNG làm mờ như tệp không đọc được. */
+.fmRow.xemduoc { cursor: pointer; }
+.fmRow.xemduoc .nm { color: var(--fg); }
+
+.fmEye {
+  background: transparent; border: 1px solid transparent;
+  color: var(--fg-faint); font-size: 12px; cursor: pointer;
+  padding: 2px 6px; border-radius: 5px; margin-right: 6px;
+}
+.fmEye:hover { background: var(--bg-hover); color: var(--accent); border-color: var(--line); }
+
+/* Trình xem nhúng ở cột giữa — cùng lớp TrinhXem với lớp phủ, khác chỗ đặt.
+   `min-height: 0` là bắt buộc trong flex/grid: thiếu nó phần tử con không co
+   lại được và vùng cuộn bên trong tràn ra ngoài khung. */
+.inlineViewer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg-app);
+}
+.inlineViewer .vwScroll { padding: 12px; }
+
+/* Nhãn vị trí cấu trúc (đoạn 12 / Sheet1!B7 / dòng 48) — dùng cho tệp không
+   có ảnh trang, nơi đường dẫn cấu trúc thay cho khung vẽ. */
+.pathBadge {
+  background: var(--bg-raise);
+  color: var(--fg-mute);
+  font-family: var(--mono);
+  font-size: 10.5px;
+}
+
+/* Nút chạy hàng loạt — viền màu nhấn để tách khỏi các nút điều hướng, vì
+   nó là hành động TỐN TIỀN chứ không phải một thao tác duyệt. */
+.fmBatchBtn {
+  background: transparent;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  border-radius: 7px;
+  padding: 4px 10px;
+  font-size: 12px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.fmBatchBtn:hover { background: var(--accent); color: var(--accent-fg); }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FILE MANAGER: danh sách + khung xem trước
+   ═══════════════════════════════════════════════════════════════════════ */
+
+.fmBody { display: flex; flex: 1; min-height: 0; }
+.fmBody .fmList { flex: 1; min-width: 0; }
+
+.fmPrev {
+  width: 260px;
+  flex: none;
+  border-left: 1px solid var(--line);
+  background: var(--bg-raise);
+  overflow: auto;
+  padding: 12px;
+}
+.fmPrevEmpty { color: var(--fg-faint); font-size: 12px; padding: 20px 4px; text-align: center; }
+.fmPrevName { display: block; font-size: 12.5px; font-weight: 600; color: var(--fg-strong);
+              word-break: break-word; line-height: 1.35; }
+.fmPrevMeta { display: block; font-size: 11px; color: var(--fg-mute); margin-top: 3px; }
+.fmPrevThumb { margin: 10px 0; }
+.fmPrevThumb img {
+  width: 100%;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  background: #fff;           /* trang giấy luôn trắng, không theo chủ đề */
+  display: block;
+}
+.fmPrevText {
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--fg-mute);
+  max-height: 170px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: var(--mono);
+  border-top: 1px solid var(--line-soft);
+  padding-top: 8px;
+}
+.fmPrevActs { display: flex; gap: 6px; margin-top: 12px; }
+.fmActBtn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--fg);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  cursor: pointer;
+}
+.fmActBtn:hover { background: var(--bg-hover); border-color: var(--fg-faint); }
+.fmActBtn.primary { border-color: var(--accent); color: var(--accent); }
+.fmActBtn.primary:hover { background: var(--accent); color: var(--accent-fg); }
+
+/* Hàng ĐANG CHỌN — khác hẳn hàng chỉ di chuột qua, vì nó quyết định nút
+   "Quét OCR" sẽ tác động lên tệp nào. */
+.fmRow.sel { background: var(--accent-dim); box-shadow: inset 2px 0 0 var(--accent); }
+
+/* ── section trong cây hồ sơ ───────────────────────────────────────────
+ *
+ * Ba cấp: SECTION (loại tài liệu) › HỒ SƠ › tài liệu. Phải phân biệt được
+ * bằng mắt ở khoảng liếc, nên mỗi cấp lùi vào sâu hơn và nhạt dần.
+ */
+.secHead {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 9px 10px;
+  background: var(--bg-sunk); border: 0;
+  border-top: 1px solid var(--line);
+  color: var(--fg); font: inherit; font-weight: 600; font-size: 12.5px;
+  text-align: left; cursor: pointer;
+  position: sticky; top: 0; z-index: 2;   /* tiêu đề loại luôn thấy khi cuộn */
+}
+.secHead:hover { background: var(--bg-hover); }
+.secHead.open { color: var(--accent); }
+.secCaret { width: 11px; flex: none; opacity: .75; font-size: 10px; }
+.secName { flex: 1; overflow: hidden; text-overflow: ellipsis;
+           white-space: nowrap; }
+/* Đếm số tài liệu: người dùng cần biết nhóm nào đáng mở TRƯỚC khi mở. */
+.secCount {
+  flex: none; min-width: 26px; padding: 1px 6px;
+  border-radius: 9px; background: var(--bg-app);
+  color: var(--fg-mute); font-size: 11px; font-weight: 600; text-align: center;
+}
+.secBody { padding-bottom: 4px; }
+.secBody .matter { padding-left: 20px; font-size: 11.5px; }
+.secBody .docItem { padding-left: 30px; }
+
+
+/* ── docx/xlsx: HTML thay cho ảnh trang ──────────────────────────────── */
+/* Nền SÁNG cố định, không theo chủ đề: đây là nội dung tài liệu, và tài
+ * liệu văn phòng luôn là giấy trắng chữ đen. Theo chủ đề tối thì bảng
+ * xlsx và chữ docx hoà vào nền — cùng kiểu lỗi đã gặp với overlay. */
+.docHtml {
+  overflow: auto; height: 100%; padding: 28px 34px;
+  background: #fff; color: #111;
+  font-size: 14px; line-height: 1.65;
+}
+.docHtml table { border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+/* Lưới cột do <colgroup> quy định phải được TÔN TRỌNG. Mặc định `auto` cho
+ * trình duyệt quyền co giãn cột theo nội dung, và thế là độ rộng lấy từ
+ * Excel bị bỏ qua — đúng cái lỗi đang sửa. */
+.docHtml table.xlsxTable { table-layout: fixed; width: max-content; max-width: none; }
+.docHtml .xlsxTable td { vertical-align: top; word-wrap: break-word; }
+/* Hàng trống là giãn cách người soạn cố ý đặt: giữ chiều cao, bỏ đường kẻ
+ * để nó không trông như một hàng dữ liệu rỗng. */
+.docHtml .xlsxTable tr.rTrong td { border-color: transparent; height: 9px; }
+.docHtml th, .docHtml td { border: 1px solid #c8c8c8; padding: 5px 9px; }
+.docHtml th { background: #f0f0f0; font-weight: 600; }
+.docHtml h1, .docHtml h2, .docHtml h3 { margin: 18px 0 8px; line-height: 1.3; }
+.docHtml p { margin: 9px 0; }
+.docHtml img { max-width: 100%; height: auto; }
+.docText { white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 13px; }

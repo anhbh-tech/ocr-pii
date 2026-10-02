@@ -1,0 +1,11 @@
+[
+ {"name": "Công ty Cổ phần Công Khai Mẫu", "category": "PARTY",
+  "why": "SYNTHETIC TEST DATA, not a real company: invented opposing party", "aliases": ["Cong Khai Mau JSC"]},
+ {"name": "VPLS Hư Cấu và Cộng Sự", "category": "FIRM",
+  "why": "SYNTHETIC TEST DATA, not a real firm: invented name of the firm itself"},
+ {"name": "Lê Giả Định", "category": "FIRM",
+  "why": "SYNTHETIC TEST DATA, not a real person: invented internal lawyer; the firm's own staff are not clients",
+  "aliases": ["LS Lê Giả Định"]},
+ {"name": "Cục Thẩm Định Hư Cấu", "category": "AGENCY",
+  "why": "SYNTHETIC TEST DATA, not a real office: invented examining agency", "aliases": ["CTĐHC"]}
+]

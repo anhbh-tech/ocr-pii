@@ -1,0 +1,44 @@
+[project]
+name = "ocr-lab"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+# Trần 3.13: SDK `landingai-ade` chỉ hỗ trợ Python 3.9–3.12. Máy đang chạy
+# 3.14, nên không ghim thì `uv sync` dựng venv mà SDK không cài được.
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "accelerate>=1.15.0",
+    "fastapi>=0.115.0,<1",
+    "huggingface-hub>=1.31.0",
+    "landingai-ade>=1.18.0,<2",
+    "numpy>=2.5.3",
+    "pillow>=12.3.0",
+    "pymupdf>=1.28.2",
+    "pytesseract>=0.3.13",
+    "rapidfuzz>=3.14.6",
+    "torch>=2.14.0",
+    "torchvision>=0.29.0",
+    "transformers>=5.0.0",
+    "uvicorn>=0.34.0,<1",
+]
+
+[build-system]
+requires = ["uv_build>=0.12.2,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "easyocr>=1.7.2",
+    "mammoth>=1.12.2",
+    "openpyxl>=3.1.5",
+    "pytest>=9.1.1",
+    "pytest-cov>=7.1.0",
+    "rapidocr-onnxruntime>=1.4.4",
+    "setuptools>=84.0.0",
+    "vietocr>=0.3.12",
+]
+
+[tool.pytest.ini_options]
+# pii-core/ có bộ test riêng, chạy trong thư mục của nó (`make test-pii-core`).
+testpaths = ["tests"]
+markers = ["slow: cần model thật, chạy lâu"]

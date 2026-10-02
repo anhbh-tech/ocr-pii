@@ -1,0 +1,25 @@
+{
+  "name": "ocr-lab-web",
+  "version": "1.0.0",
+  "description": "Ph\u00f2ng th\u00ed nghi\u1ec7m OCR \u0111\u1ed9c l\u1eadp cho t\u00e0i li\u1ec7u ti\u1ebfng Vi\u1ec7t + ti\u1ebfng Anh.",
+  "main": "index.js",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "vite": "^8.3.0"
+  },
+  "dependencies": {
+    "pdfjs-dist": "^6.3.289"
+  },
+  "private": true
+}
